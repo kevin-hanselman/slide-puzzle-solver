@@ -279,3 +279,170 @@ func TestIsSolved(t *testing.T) {
 		})
 	}
 }
+
+func TestMakeMove(t *testing.T) {
+	t.Run("move North - swap with cell above", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 0, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		got := puzzle.makeMove(North)
+
+		wantGrid := [][]int{
+			{1, 0, 3},
+			{4, 2, 5},
+			{6, 7, 8},
+		}
+		want, err := NewPuzzle(wantGrid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		if diff := cmp.Diff(*want, got, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
+			t.Errorf("makeMove(North) mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("move South - swap with cell below", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 0, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		got := puzzle.makeMove(South)
+
+		wantGrid := [][]int{
+			{1, 2, 3},
+			{4, 7, 5},
+			{6, 0, 8},
+		}
+		want, err := NewPuzzle(wantGrid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		if diff := cmp.Diff(*want, got, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
+			t.Errorf("makeMove(South) mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("move East - swap with cell to the right", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 0, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		got := puzzle.makeMove(East)
+
+		wantGrid := [][]int{
+			{1, 2, 3},
+			{4, 5, 0},
+			{6, 7, 8},
+		}
+		want, err := NewPuzzle(wantGrid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		if diff := cmp.Diff(*want, got, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
+			t.Errorf("makeMove(East) mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("move West - swap with cell to the left", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 0, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		got := puzzle.makeMove(West)
+
+		wantGrid := [][]int{
+			{1, 2, 3},
+			{0, 4, 5},
+			{6, 7, 8},
+		}
+		want, err := NewPuzzle(wantGrid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		if diff := cmp.Diff(*want, got, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
+			t.Errorf("makeMove(West) mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("original puzzle is not modified", func(t *testing.T) {
+		originalGrid := [][]int{
+			{1, 2, 3},
+			{4, 0, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(originalGrid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		want, err := NewPuzzle(originalGrid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		_ = puzzle.makeMove(North)
+
+		// Original puzzle should remain unchanged
+		if diff := cmp.Diff(*want, *puzzle, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
+			t.Errorf("original puzzle was modified (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("sequence of moves", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 0, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		// Move North, then East
+		got := puzzle.makeMove(North).makeMove(East)
+
+		wantGrid := [][]int{
+			{1, 3, 0},
+			{4, 2, 5},
+			{6, 7, 8},
+		}
+		want, err := NewPuzzle(wantGrid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		if diff := cmp.Diff(*want, got, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
+			t.Errorf("after North then East mismatch (-want +got):\n%s", diff)
+		}
+	})
+}

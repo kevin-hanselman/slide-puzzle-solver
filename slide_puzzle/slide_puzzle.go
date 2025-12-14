@@ -72,7 +72,7 @@ func NewPuzzle(grid [][]int, emptyCellValue int) (*Puzzle, error) {
 	return &Puzzle{grid: grid, emptyCell: emptyCell}, nil
 }
 
-func (p *Puzzle) getMoves() map[move]bool {
+func (p Puzzle) getMoves() map[move]bool {
 	moves := make(map[move]bool)
 	if p.emptyCell.coord.row > 0 {
 		moves[North] = true
@@ -89,7 +89,7 @@ func (p *Puzzle) getMoves() map[move]bool {
 	return moves
 }
 
-func (p *Puzzle) isSolved() bool {
+func (p Puzzle) isSolved() bool {
 	want := 0
 	for row := range p.grid {
 		for col := range p.grid[row] {
@@ -100,4 +100,43 @@ func (p *Puzzle) isSolved() bool {
 		}
 	}
 	return true
+}
+
+func (p Puzzle) makeMove(m move) Puzzle {
+	// Create a deep copy of the grid
+	newGrid := make([][]int, len(p.grid))
+	for i := range p.grid {
+		newGrid[i] = make([]int, len(p.grid[i]))
+		copy(newGrid[i], p.grid[i])
+	}
+
+	// Determine the target cell based on move direction
+	var targetRow, targetCol int
+	switch m {
+	case North:
+		targetRow = p.emptyCell.coord.row - 1
+		targetCol = p.emptyCell.coord.col
+	case South:
+		targetRow = p.emptyCell.coord.row + 1
+		targetCol = p.emptyCell.coord.col
+	case East:
+		targetRow = p.emptyCell.coord.row
+		targetCol = p.emptyCell.coord.col + 1
+	case West:
+		targetRow = p.emptyCell.coord.row
+		targetCol = p.emptyCell.coord.col - 1
+	}
+
+	// Swap the empty cell with the target cell
+	newGrid[p.emptyCell.coord.row][p.emptyCell.coord.col] = newGrid[targetRow][targetCol]
+	newGrid[targetRow][targetCol] = p.emptyCell.value
+
+	// Create new puzzle with updated grid and empty cell position
+	return Puzzle{
+		grid: newGrid,
+		emptyCell: cell{
+			value: p.emptyCell.value,
+			coord: coord{row: targetRow, col: targetCol},
+		},
+	}
 }
