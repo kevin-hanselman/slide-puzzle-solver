@@ -32,23 +32,23 @@ type coord struct {
 	row, col int
 }
 
-type move int
+type Move int
 
 const (
-	North move = iota
+	North Move = iota
 	South
 	East
 	West
 )
 
-var moveStrings = map[move]string{
+var moveStrings = map[Move]string{
 	North: "North",
 	South: "South",
 	East:  "East",
 	West:  "West",
 }
 
-func (m move) String() string {
+func (m Move) String() string {
 	return moveStrings[m]
 }
 
@@ -60,12 +60,34 @@ func NewPuzzle(grid [][]int, emptyCellValue int) (*Puzzle, error) {
 	emptyCount := 0
 	emptyCell := cell{value: emptyCellValue}
 	rowLength := len(grid[0])
+	numCells := len(grid) * rowLength
+	seen := make([]bool, numCells)
 
 	for row := range grid {
 		if len(grid[row]) != rowLength {
-			return nil, &InvalidPuzzleError{fmt.Sprintf("all rows must have the same length; row 0 has %d columns, row %d has %d columns", rowLength, row, len(grid[row]))}
+			return nil, &InvalidPuzzleError{
+				fmt.Sprintf(
+					"all rows must have the same length; row 0 has %d columns, row %d has %d columns",
+					rowLength,
+					row,
+					len(grid[row]),
+				),
+			}
 		}
 		for col := range grid[row] {
+			val := grid[row][col]
+
+			// Check if value is in valid range
+			if val < 0 || val >= numCells {
+				return nil, &InvalidPuzzleError{fmt.Sprintf("grid values must be in range [0, %d); got %d", numCells, val)}
+			}
+
+			// Check for duplicates
+			if seen[val] {
+				return nil, &InvalidPuzzleError{fmt.Sprintf("duplicate value %d found in grid", val)}
+			}
+			seen[val] = true
+
 			if grid[row][col] == emptyCellValue {
 				emptyCount++
 				emptyCell.coord = coord{row: row, col: col}
@@ -80,8 +102,8 @@ func NewPuzzle(grid [][]int, emptyCellValue int) (*Puzzle, error) {
 	return &Puzzle{grid: grid, emptyCell: emptyCell}, nil
 }
 
-func (p Puzzle) getMoves() map[move]bool {
-	moves := make(map[move]bool)
+func (p Puzzle) getMoves() map[Move]bool {
+	moves := make(map[Move]bool)
 	if p.emptyCell.coord.row > 0 {
 		moves[North] = true
 	}
@@ -115,7 +137,7 @@ func (p Puzzle) isSolved() bool {
 //
 // Note that the receiver is not a pointer, so the original puzzle is not
 // modified.
-func (p Puzzle) makeMove(m move) (Puzzle, error) {
+func (p Puzzle) makeMove(m Move) (Puzzle, error) {
 	// Validate that the move is possible
 	validMoves := p.getMoves()
 	if !validMoves[m] {
