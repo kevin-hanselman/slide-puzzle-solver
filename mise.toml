@@ -1,0 +1,28 @@
+[tools]
+go = "1.25"
+"go:golang.org/x/tools/cmd/goimports" = "latest"
+"go:golang.org/x/tools/gopls" = "latest"
+"go:honnef.co/go/tools/cmd/staticcheck" = "latest"
+"go:mvdan.cc/gofumpt" = "latest"
+# We could compile Crush, but it takes a long time.
+"github:charmbracelet/crush" = "latest"
+"pipx:mdformat" = "latest"
+
+[tasks.build]
+run = "go build"
+
+[tasks.fmt]
+run = [
+  "goimports -w -l .",
+  "gofumpt -w -l .",
+  "mdformat .",
+]
+
+[tasks.test]
+run = "go test ./..."
+
+[tasks.lint]
+run = [
+  "go vet ./...",
+  "staticcheck ./...",
+]
