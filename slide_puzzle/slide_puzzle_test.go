@@ -292,7 +292,10 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		got := puzzle.makeMove(North)
+		got, err := puzzle.makeMove(North)
+		if err != nil {
+			t.Fatalf("makeMove(North) error: %v", err)
+		}
 
 		wantGrid := [][]int{
 			{1, 0, 3},
@@ -320,7 +323,10 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		got := puzzle.makeMove(South)
+		got, err := puzzle.makeMove(South)
+		if err != nil {
+			t.Fatalf("makeMove(South) error: %v", err)
+		}
 
 		wantGrid := [][]int{
 			{1, 2, 3},
@@ -348,7 +354,10 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		got := puzzle.makeMove(East)
+		got, err := puzzle.makeMove(East)
+		if err != nil {
+			t.Fatalf("makeMove(East) error: %v", err)
+		}
 
 		wantGrid := [][]int{
 			{1, 2, 3},
@@ -376,7 +385,10 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		got := puzzle.makeMove(West)
+		got, err := puzzle.makeMove(West)
+		if err != nil {
+			t.Fatalf("makeMove(West) error: %v", err)
+		}
 
 		wantGrid := [][]int{
 			{1, 2, 3},
@@ -404,12 +416,21 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		want, err := NewPuzzle(originalGrid, 0)
+		// Deep copy the expected grid before the move
+		wantGrid := [][]int{
+			{1, 2, 3},
+			{4, 0, 5},
+			{6, 7, 8},
+		}
+		want, err := NewPuzzle(wantGrid, 0)
 		if err != nil {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		_ = puzzle.makeMove(North)
+		_, err = puzzle.makeMove(North)
+		if err != nil {
+			t.Fatalf("makeMove(North) error: %v", err)
+		}
 
 		// Original puzzle should remain unchanged
 		if diff := cmp.Diff(*want, *puzzle, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
@@ -429,7 +450,14 @@ func TestMakeMove(t *testing.T) {
 		}
 
 		// Move North, then East
-		got := puzzle.makeMove(North).makeMove(East)
+		result, err := puzzle.makeMove(North)
+		if err != nil {
+			t.Fatalf("makeMove(North) error: %v", err)
+		}
+		got, err := result.makeMove(East)
+		if err != nil {
+			t.Fatalf("makeMove(East) error: %v", err)
+		}
 
 		wantGrid := [][]int{
 			{1, 3, 0},
@@ -443,6 +471,94 @@ func TestMakeMove(t *testing.T) {
 
 		if diff := cmp.Diff(*want, got, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
 			t.Errorf("after North then East mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("invalid move North from top edge", func(t *testing.T) {
+		grid := [][]int{
+			{1, 0, 3},
+			{4, 2, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		_, err = puzzle.makeMove(North)
+		if err == nil {
+			t.Fatal("makeMove(North) from top edge error = nil, want InvalidMoveError")
+		}
+
+		var invalidErr *InvalidMoveError
+		if !errors.As(err, &invalidErr) {
+			t.Fatalf("makeMove(North) from top edge error type = %T, want *InvalidMoveError", err)
+		}
+	})
+
+	t.Run("invalid move South from bottom edge", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 5, 6},
+			{7, 0, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		_, err = puzzle.makeMove(South)
+		if err == nil {
+			t.Fatal("makeMove(South) from bottom edge error = nil, want InvalidMoveError")
+		}
+
+		var invalidErr *InvalidMoveError
+		if !errors.As(err, &invalidErr) {
+			t.Fatalf("makeMove(South) from bottom edge error type = %T, want *InvalidMoveError", err)
+		}
+	})
+
+	t.Run("invalid move East from right edge", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 5, 0},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		_, err = puzzle.makeMove(East)
+		if err == nil {
+			t.Fatal("makeMove(East) from right edge error = nil, want InvalidMoveError")
+		}
+
+		var invalidErr *InvalidMoveError
+		if !errors.As(err, &invalidErr) {
+			t.Fatalf("makeMove(East) from right edge error type = %T, want *InvalidMoveError", err)
+		}
+	})
+
+	t.Run("invalid move West from left edge", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{0, 4, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		_, err = puzzle.makeMove(West)
+		if err == nil {
+			t.Fatal("makeMove(West) from left edge error = nil, want InvalidMoveError")
+		}
+
+		var invalidErr *InvalidMoveError
+		if !errors.As(err, &invalidErr) {
+			t.Fatalf("makeMove(West) from left edge error type = %T, want *InvalidMoveError", err)
 		}
 	})
 }

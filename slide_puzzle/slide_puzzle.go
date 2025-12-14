@@ -20,6 +20,14 @@ func (e InvalidPuzzleError) Error() string {
 	return e.msg
 }
 
+type InvalidMoveError struct {
+	msg string
+}
+
+func (e InvalidMoveError) Error() string {
+	return e.msg
+}
+
 type coord struct {
 	row, col int
 }
@@ -102,7 +110,18 @@ func (p Puzzle) isSolved() bool {
 	return true
 }
 
-func (p Puzzle) makeMove(m move) Puzzle {
+// makeMove moves the Puzzle's emptyCell in the given direction and returns the
+// updated Puzzle.
+//
+// Note that the receiver is not a pointer, so the original puzzle is not
+// modified.
+func (p Puzzle) makeMove(m move) (Puzzle, error) {
+	// Validate that the move is possible
+	validMoves := p.getMoves()
+	if !validMoves[m] {
+		return Puzzle{}, &InvalidMoveError{fmt.Sprintf("cannot move %s from current position", m)}
+	}
+
 	// Create a deep copy of the grid
 	newGrid := make([][]int, len(p.grid))
 	for i := range p.grid {
@@ -138,5 +157,5 @@ func (p Puzzle) makeMove(m move) Puzzle {
 			value: p.emptyCell.value,
 			coord: coord{row: targetRow, col: targetCol},
 		},
-	}
+	}, nil
 }
