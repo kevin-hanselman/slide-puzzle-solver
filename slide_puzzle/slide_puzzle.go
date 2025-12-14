@@ -4,10 +4,10 @@ import "fmt"
 
 type Puzzle struct {
 	grid      [][]int
-	emptyCell cell
+	emptyTile tile
 }
 
-type cell struct {
+type tile struct {
 	value int
 	coord coord
 }
@@ -52,16 +52,16 @@ func (m Move) String() string {
 	return moveStrings[m]
 }
 
-func NewPuzzle(grid [][]int, emptyCellValue int) (*Puzzle, error) {
+func NewPuzzle(grid [][]int, emptyTileValue int) (*Puzzle, error) {
 	if len(grid) == 0 {
 		return nil, &InvalidPuzzleError{"puzzle must have at least one row"}
 	}
 
 	emptyCount := 0
-	emptyCell := cell{value: emptyCellValue}
+	emptyTile := tile{value: emptyTileValue}
 	rowLength := len(grid[0])
-	numCells := len(grid) * rowLength
-	seen := make([]bool, numCells)
+	numTiles := len(grid) * rowLength
+	seen := make([]bool, numTiles)
 
 	for row := range grid {
 		if len(grid[row]) != rowLength {
@@ -78,8 +78,8 @@ func NewPuzzle(grid [][]int, emptyCellValue int) (*Puzzle, error) {
 			val := grid[row][col]
 
 			// Check if value is in valid range
-			if val < 0 || val >= numCells {
-				return nil, &InvalidPuzzleError{fmt.Sprintf("grid values must be in range [0, %d); got %d", numCells, val)}
+			if val < 0 || val >= numTiles {
+				return nil, &InvalidPuzzleError{fmt.Sprintf("grid values must be in range [0, %d); got %d", numTiles, val)}
 			}
 
 			// Check for duplicates
@@ -88,33 +88,37 @@ func NewPuzzle(grid [][]int, emptyCellValue int) (*Puzzle, error) {
 			}
 			seen[val] = true
 
-			if grid[row][col] == emptyCellValue {
+			if grid[row][col] == emptyTileValue {
 				emptyCount++
-				emptyCell.coord = coord{row: row, col: col}
+				emptyTile.coord = coord{row: row, col: col}
 			}
 		}
 	}
 
 	if emptyCount != 1 {
-		return nil, &InvalidPuzzleError{fmt.Sprintf("puzzle must contain exactly one empty cell; got %d", emptyCount)}
+		return nil, &InvalidPuzzleError{fmt.Sprintf("puzzle must contain exactly one empty tile; got %d", emptyCount)}
 	}
 
-	return &Puzzle{grid: grid, emptyCell: emptyCell}, nil
+	return &Puzzle{grid: grid, emptyTile: emptyTile}, nil
 }
 
 func (p Puzzle) getMoves() map[Move]bool {
 	moves := make(map[Move]bool)
-	if p.emptyCell.coord.row > 0 {
+	// North: move tile from south up
+	if p.emptyTile.coord.row < (len(p.grid) - 1) {
 		moves[North] = true
 	}
-	if p.emptyCell.coord.row < (len(p.grid) - 1) {
+	// South: move tile from north down
+	if p.emptyTile.coord.row > 0 {
 		moves[South] = true
 	}
-	if p.emptyCell.coord.col > 0 {
-		moves[West] = true
-	}
-	if p.emptyCell.coord.col < (len(p.grid[0]) - 1) {
+	// East: move tile from west right
+	if p.emptyTile.coord.col > 0 {
 		moves[East] = true
+	}
+	// West: move tile from east left
+	if p.emptyTile.coord.col < (len(p.grid[0]) - 1) {
+		moves[West] = true
 	}
 	return moves
 }
@@ -132,8 +136,9 @@ func (p Puzzle) isSolved() bool {
 	return true
 }
 
-// makeMove moves the Puzzle's emptyCell in the given direction and returns the
-// updated Puzzle.
+// makeMove moves a tile in the given direction into the empty space and returns
+// the updated Puzzle. For example, Move North moves the tile south of the empty
+// space up into the empty space.
 //
 // Note that the receiver is not a pointer, so the original puzzle is not
 // modified.
@@ -151,32 +156,36 @@ func (p Puzzle) makeMove(m Move) (Puzzle, error) {
 		copy(newGrid[i], p.grid[i])
 	}
 
-	// Determine the target cell based on move direction
+	// Determine the target tile based on move direction
+	// Move direction refers to the tile moving, not the empty tile.
 	var targetRow, targetCol int
 	switch m {
 	case North:
-		targetRow = p.emptyCell.coord.row - 1
-		targetCol = p.emptyCell.coord.col
+		// Move tile from south up
+		targetRow = p.emptyTile.coord.row + 1
+		targetCol = p.emptyTile.coord.col
 	case South:
-		targetRow = p.emptyCell.coord.row + 1
-		targetCol = p.emptyCell.coord.col
+		// Move tile from north down
+		targetRow = p.emptyTile.coord.row - 1
+		targetCol = p.emptyTile.coord.col
 	case East:
-		targetRow = p.emptyCell.coord.row
-		targetCol = p.emptyCell.coord.col + 1
+		// Move tile from west right
+		targetRow = p.emptyTile.coord.row
+		targetCol = p.emptyTile.coord.col - 1
 	case West:
-		targetRow = p.emptyCell.coord.row
-		targetCol = p.emptyCell.coord.col - 1
+		// Move tile from east left
+		targetRow = p.emptyTile.coord.row
+		targetCol = p.emptyTile.coord.col + 1
 	}
 
-	// Swap the empty cell with the target cell
-	newGrid[p.emptyCell.coord.row][p.emptyCell.coord.col] = newGrid[targetRow][targetCol]
-	newGrid[targetRow][targetCol] = p.emptyCell.value
+	// Swap the empty tile with the target tile.
+	newGrid[p.emptyTile.coord.row][p.emptyTile.coord.col] = newGrid[targetRow][targetCol]
+	newGrid[targetRow][targetCol] = p.emptyTile.value
 
-	// Create new puzzle with updated grid and empty cell position
 	return Puzzle{
 		grid: newGrid,
-		emptyCell: cell{
-			value: p.emptyCell.value,
+		emptyTile: tile{
+			value: p.emptyTile.value,
 			coord: coord{row: targetRow, col: targetCol},
 		},
 	}, nil

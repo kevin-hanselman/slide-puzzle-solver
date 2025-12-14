@@ -8,13 +8,13 @@ import (
 )
 
 func assertPuzzlesEqual(t *testing.T, a, b *Puzzle) {
-	if diff := cmp.Diff(a, b, cmp.AllowUnexported(Puzzle{}, cell{}, coord{})); diff != "" {
+	if diff := cmp.Diff(a, b, cmp.AllowUnexported(Puzzle{}, tile{}, coord{})); diff != "" {
 		t.Errorf("Puzzles are different (-first +second):\n%s", diff)
 	}
 }
 
 func TestNewPuzzle(t *testing.T) {
-	t.Run("valid puzzle with one empty cell", func(t *testing.T) {
+	t.Run("valid puzzle with one empty tile", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 0, 5},
@@ -32,7 +32,7 @@ func TestNewPuzzle(t *testing.T) {
 				{4, 0, 5},
 				{6, 7, 8},
 			},
-			emptyCell: cell{
+			emptyTile: tile{
 				value: 0,
 				coord: coord{row: 1, col: 1},
 			},
@@ -41,7 +41,7 @@ func TestNewPuzzle(t *testing.T) {
 		assertPuzzlesEqual(t, want, got)
 	})
 
-	t.Run("empty cell at top-left", func(t *testing.T) {
+	t.Run("empty tile at top-left", func(t *testing.T) {
 		grid := [][]int{
 			{0, 1, 2},
 			{3, 4, 5},
@@ -59,7 +59,7 @@ func TestNewPuzzle(t *testing.T) {
 				{3, 4, 5},
 				{6, 7, 8},
 			},
-			emptyCell: cell{
+			emptyTile: tile{
 				value: 0,
 				coord: coord{row: 0, col: 0},
 			},
@@ -68,7 +68,7 @@ func TestNewPuzzle(t *testing.T) {
 		assertPuzzlesEqual(t, want, got)
 	})
 
-	t.Run("empty cell at bottom-right", func(t *testing.T) {
+	t.Run("empty tile at bottom-right", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 5, 6},
@@ -86,7 +86,7 @@ func TestNewPuzzle(t *testing.T) {
 				{4, 5, 6},
 				{7, 8, 0},
 			},
-			emptyCell: cell{
+			emptyTile: tile{
 				value: 0,
 				coord: coord{row: 2, col: 2},
 			},
@@ -95,7 +95,7 @@ func TestNewPuzzle(t *testing.T) {
 		assertPuzzlesEqual(t, want, got)
 	})
 
-	t.Run("multiple empty cells returns error", func(t *testing.T) {
+	t.Run("multiple empty tiles returns error", func(t *testing.T) {
 		grid := [][]int{
 			{1, 0, 3},
 			{4, 0, 5},
@@ -113,7 +113,7 @@ func TestNewPuzzle(t *testing.T) {
 		}
 	})
 
-	t.Run("no empty cells returns error", func(t *testing.T) {
+	t.Run("no empty tiles returns error", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 5, 6},
@@ -229,7 +229,7 @@ func TestGetMove(t *testing.T) {
 		wantMoves map[Move]bool
 	}{
 		{
-			name: "empty cell in middle - all moves available",
+			name: "empty tile in middle - all moves available",
 			grid: [][]int{
 				{1, 2, 3},
 				{4, 0, 5},
@@ -238,58 +238,58 @@ func TestGetMove(t *testing.T) {
 			wantMoves: map[Move]bool{North: true, South: true, East: true, West: true},
 		},
 		{
-			name: "empty cell at top-left corner",
+			name: "empty tile at top-left corner",
 			grid: [][]int{
 				{0, 1, 2},
 				{3, 4, 5},
 				{6, 7, 8},
 			},
-			wantMoves: map[Move]bool{South: true, East: true},
+			wantMoves: map[Move]bool{North: true, West: true},
 		},
 		{
-			name: "empty cell at top-right corner",
+			name: "empty tile at top-right corner",
 			grid: [][]int{
 				{1, 2, 0},
 				{3, 4, 5},
 				{6, 7, 8},
 			},
-			wantMoves: map[Move]bool{South: true, West: true},
+			wantMoves: map[Move]bool{North: true, East: true},
 		},
 		{
-			name: "empty cell at bottom-left corner",
+			name: "empty tile at bottom-left corner",
 			grid: [][]int{
 				{1, 2, 3},
 				{4, 5, 6},
 				{0, 7, 8},
 			},
-			wantMoves: map[Move]bool{North: true, East: true},
+			wantMoves: map[Move]bool{South: true, West: true},
 		},
 		{
-			name: "empty cell at bottom-right corner",
+			name: "empty tile at bottom-right corner",
 			grid: [][]int{
 				{1, 2, 3},
 				{4, 5, 6},
 				{7, 8, 0},
 			},
-			wantMoves: map[Move]bool{North: true, West: true},
+			wantMoves: map[Move]bool{South: true, East: true},
 		},
 		{
-			name: "empty cell on top edge",
+			name: "empty tile on top edge",
 			grid: [][]int{
 				{1, 0, 2},
 				{3, 4, 5},
 				{6, 7, 8},
 			},
-			wantMoves: map[Move]bool{South: true, East: true, West: true},
+			wantMoves: map[Move]bool{North: true, East: true, West: true},
 		},
 		{
-			name: "empty cell on left edge",
+			name: "empty tile on left edge",
 			grid: [][]int{
 				{1, 2, 3},
 				{0, 4, 5},
 				{6, 7, 8},
 			},
-			wantMoves: map[Move]bool{North: true, South: true, East: true},
+			wantMoves: map[Move]bool{North: true, South: true, West: true},
 		},
 	}
 
@@ -378,7 +378,7 @@ func TestIsSolved(t *testing.T) {
 }
 
 func TestMakeMove(t *testing.T) {
-	t.Run("move North - swap with cell above", func(t *testing.T) {
+	t.Run("move North - tile from south moves up", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 0, 5},
@@ -395,9 +395,9 @@ func TestMakeMove(t *testing.T) {
 		}
 
 		wantGrid := [][]int{
-			{1, 0, 3},
-			{4, 2, 5},
-			{6, 7, 8},
+			{1, 2, 3},
+			{4, 7, 5},
+			{6, 0, 8},
 		}
 		want, err := NewPuzzle(wantGrid, 0)
 		if err != nil {
@@ -407,7 +407,7 @@ func TestMakeMove(t *testing.T) {
 		assertPuzzlesEqual(t, want, &got)
 	})
 
-	t.Run("move South - swap with cell below", func(t *testing.T) {
+	t.Run("move South - tile from north moves down", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 0, 5},
@@ -424,9 +424,9 @@ func TestMakeMove(t *testing.T) {
 		}
 
 		wantGrid := [][]int{
-			{1, 2, 3},
-			{4, 7, 5},
-			{6, 0, 8},
+			{1, 0, 3},
+			{4, 2, 5},
+			{6, 7, 8},
 		}
 		want, err := NewPuzzle(wantGrid, 0)
 		if err != nil {
@@ -436,7 +436,7 @@ func TestMakeMove(t *testing.T) {
 		assertPuzzlesEqual(t, want, &got)
 	})
 
-	t.Run("move East - swap with cell to the right", func(t *testing.T) {
+	t.Run("move East - tile from west moves right", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 0, 5},
@@ -454,7 +454,7 @@ func TestMakeMove(t *testing.T) {
 
 		wantGrid := [][]int{
 			{1, 2, 3},
-			{4, 5, 0},
+			{0, 4, 5},
 			{6, 7, 8},
 		}
 		want, err := NewPuzzle(wantGrid, 0)
@@ -465,7 +465,7 @@ func TestMakeMove(t *testing.T) {
 		assertPuzzlesEqual(t, want, &got)
 	})
 
-	t.Run("move West - swap with cell to the left", func(t *testing.T) {
+	t.Run("move West - tile from east moves left", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 0, 5},
@@ -483,7 +483,7 @@ func TestMakeMove(t *testing.T) {
 
 		wantGrid := [][]int{
 			{1, 2, 3},
-			{0, 4, 5},
+			{4, 5, 0},
 			{6, 7, 8},
 		}
 		want, err := NewPuzzle(wantGrid, 0)
@@ -536,7 +536,7 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		// Move North, then East
+		// Move North (7 moves up), then East (6 moves right)
 		result, err := puzzle.makeMove(North)
 		if err != nil {
 			t.Fatalf("makeMove(North) error: %v", err)
@@ -547,9 +547,9 @@ func TestMakeMove(t *testing.T) {
 		}
 
 		wantGrid := [][]int{
-			{1, 3, 0},
-			{4, 2, 5},
-			{6, 7, 8},
+			{1, 2, 3},
+			{4, 7, 5},
+			{0, 6, 8},
 		}
 		want, err := NewPuzzle(wantGrid, 0)
 		if err != nil {
@@ -559,29 +559,7 @@ func TestMakeMove(t *testing.T) {
 		assertPuzzlesEqual(t, want, &got)
 	})
 
-	t.Run("invalid move North from top edge", func(t *testing.T) {
-		grid := [][]int{
-			{1, 0, 3},
-			{4, 2, 5},
-			{6, 7, 8},
-		}
-		puzzle, err := NewPuzzle(grid, 0)
-		if err != nil {
-			t.Fatalf("NewPuzzle() error: %v", err)
-		}
-
-		_, err = puzzle.makeMove(North)
-		if err == nil {
-			t.Fatal("makeMove(North) from top edge error = nil, want InvalidMoveError")
-		}
-
-		var invalidErr *InvalidMoveError
-		if !errors.As(err, &invalidErr) {
-			t.Fatalf("makeMove(North) from top edge error type = %T, want *InvalidMoveError", err)
-		}
-	})
-
-	t.Run("invalid move South from bottom edge", func(t *testing.T) {
+	t.Run("invalid move North from bottom edge", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{4, 5, 6},
@@ -592,21 +570,21 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		_, err = puzzle.makeMove(South)
+		_, err = puzzle.makeMove(North)
 		if err == nil {
-			t.Fatal("makeMove(South) from bottom edge error = nil, want InvalidMoveError")
+			t.Fatal("makeMove(North) from bottom edge error = nil, want InvalidMoveError")
 		}
 
 		var invalidErr *InvalidMoveError
 		if !errors.As(err, &invalidErr) {
-			t.Fatalf("makeMove(South) from bottom edge error type = %T, want *InvalidMoveError", err)
+			t.Fatalf("makeMove(North) from bottom edge error type = %T, want *InvalidMoveError", err)
 		}
 	})
 
-	t.Run("invalid move East from right edge", func(t *testing.T) {
+	t.Run("invalid move South from top edge", func(t *testing.T) {
 		grid := [][]int{
-			{1, 2, 3},
-			{4, 5, 0},
+			{1, 0, 3},
+			{4, 2, 5},
 			{6, 7, 8},
 		}
 		puzzle, err := NewPuzzle(grid, 0)
@@ -614,18 +592,18 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		_, err = puzzle.makeMove(East)
+		_, err = puzzle.makeMove(South)
 		if err == nil {
-			t.Fatal("makeMove(East) from right edge error = nil, want InvalidMoveError")
+			t.Fatal("makeMove(South) from top edge error = nil, want InvalidMoveError")
 		}
 
 		var invalidErr *InvalidMoveError
 		if !errors.As(err, &invalidErr) {
-			t.Fatalf("makeMove(East) from right edge error type = %T, want *InvalidMoveError", err)
+			t.Fatalf("makeMove(South) from top edge error type = %T, want *InvalidMoveError", err)
 		}
 	})
 
-	t.Run("invalid move West from left edge", func(t *testing.T) {
+	t.Run("invalid move East from left edge", func(t *testing.T) {
 		grid := [][]int{
 			{1, 2, 3},
 			{0, 4, 5},
@@ -636,14 +614,36 @@ func TestMakeMove(t *testing.T) {
 			t.Fatalf("NewPuzzle() error: %v", err)
 		}
 
-		_, err = puzzle.makeMove(West)
+		_, err = puzzle.makeMove(East)
 		if err == nil {
-			t.Fatal("makeMove(West) from left edge error = nil, want InvalidMoveError")
+			t.Fatal("makeMove(East) from left edge error = nil, want InvalidMoveError")
 		}
 
 		var invalidErr *InvalidMoveError
 		if !errors.As(err, &invalidErr) {
-			t.Fatalf("makeMove(West) from left edge error type = %T, want *InvalidMoveError", err)
+			t.Fatalf("makeMove(East) from left edge error type = %T, want *InvalidMoveError", err)
+		}
+	})
+
+	t.Run("invalid move West from right edge", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{4, 5, 0},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		_, err = puzzle.makeMove(West)
+		if err == nil {
+			t.Fatal("makeMove(West) from right edge error = nil, want InvalidMoveError")
+		}
+
+		var invalidErr *InvalidMoveError
+		if !errors.As(err, &invalidErr) {
+			t.Fatalf("makeMove(West) from right edge error type = %T, want *InvalidMoveError", err)
 		}
 	})
 }
