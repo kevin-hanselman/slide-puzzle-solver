@@ -647,3 +647,82 @@ func TestMakeMove(t *testing.T) {
 		}
 	})
 }
+
+func TestSolve(t *testing.T) {
+	t.Run("already solved puzzle", func(t *testing.T) {
+		grid := [][]int{
+			{0, 1, 2},
+			{3, 4, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		got, err := puzzle.Solve()
+		if err != nil {
+			t.Fatalf("Solve() error: %v", err)
+		}
+		if len(got) != 0 {
+			t.Fatalf("Solve() returned %d moves, want 0 for already solved puzzle", len(got))
+		}
+	})
+
+	t.Run("simple one-step solve", func(t *testing.T) {
+		grid := [][]int{
+			{3, 1, 2},
+			{0, 4, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		want := []Move{South}
+
+		got, err := puzzle.Solve()
+		if err != nil {
+			t.Fatalf("Solve() error: %v", err)
+		}
+		if diff := cmp.Diff(got, want); diff != "" {
+			t.Fatalf("Solution incorrect (-got, +want):\n%s", diff)
+		}
+	})
+
+	t.Run("multi-step solve", func(t *testing.T) {
+		grid := [][]int{
+			{1, 2, 3},
+			{0, 4, 5},
+			{6, 7, 8},
+		}
+		puzzle, err := NewPuzzle(grid, 0)
+		if err != nil {
+			t.Fatalf("NewPuzzle() error: %v", err)
+		}
+
+		got, err := puzzle.Solve()
+		if err != nil {
+			t.Fatalf("Solve() error: %v", err)
+		}
+
+		// Verify the solution by applying moves
+		result := *puzzle
+		for _, move := range got {
+			result, err = result.makeMove(move)
+			if err != nil {
+				t.Fatalf("applying move %v failed: %v", move, err)
+			}
+		}
+
+		if !result.isSolved() {
+			t.Fatalf("puzzle not solved after applying moves %v", got)
+		}
+
+		// BFS should find optimal solution; verify it's reasonable
+		if len(got) == 0 {
+			t.Fatal("expected non-zero moves for unsolved puzzle")
+		}
+	})
+}

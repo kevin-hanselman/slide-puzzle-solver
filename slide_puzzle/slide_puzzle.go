@@ -28,6 +28,12 @@ func (e InvalidMoveError) Error() string {
 	return e.msg
 }
 
+type UnsolvablePuzzleError struct{}
+
+func (e UnsolvablePuzzleError) Error() string {
+	return "puzzle is not solvable"
+}
+
 type coord struct {
 	row, col int
 }
@@ -189,4 +195,55 @@ func (p Puzzle) makeMove(m Move) (Puzzle, error) {
 			coord: coord{row: targetRow, col: targetCol},
 		},
 	}, nil
+}
+
+func (p Puzzle) String() string {
+	return fmt.Sprintf("grid=%v; empty=%v", p.grid, p.emptyTile.value)
+}
+
+func (p Puzzle) Solve() ([]Move, error) {
+	// Check if already solved
+	if p.isSolved() {
+		return []Move{}, nil
+	}
+
+	// BFS state
+	type state struct {
+		puzzle Puzzle
+		moves  []Move
+	}
+
+	queue := []state{{puzzle: p, moves: []Move{}}}
+	visited := make(map[string]bool)
+	visited[p.String()] = true
+
+	for len(queue) > 0 {
+		// De-queue the next state.
+		current := queue[0]
+		queue = queue[1:]
+
+		for move := range current.puzzle.getMoves() {
+			newPuzzle, err := current.puzzle.makeMove(move)
+			if err != nil {
+				return nil, err
+			}
+
+			if newPuzzle.isSolved() {
+				return append(current.moves, move), nil
+			}
+
+			// Add to queue if not visited
+			key := newPuzzle.String()
+			if !visited[key] {
+				visited[key] = true
+				// Copy current moves and append this move.
+				newMoves := make([]Move, len(current.moves)+1)
+				copy(newMoves, current.moves)
+				newMoves[len(current.moves)] = move
+				queue = append(queue, state{puzzle: newPuzzle, moves: newMoves})
+			}
+		}
+	}
+
+	return nil, UnsolvablePuzzleError{}
 }
